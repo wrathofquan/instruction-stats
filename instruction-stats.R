@@ -78,6 +78,6 @@ p8 <- ggplot(data= quan, aes(x=time)) +
 
 
 ## grid
-grid.arrange(p1, p2, p3, p4,p5, p6, p7, p8, nrow = 2, heights = c(0.35, 0.65))
+grid.arrange(p1, p2, p3, p4,p5, p6, p7, p8, nrow = 2)
 
 
