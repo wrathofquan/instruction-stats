@@ -1,6 +1,7 @@
 library(tidyverse)
 library(googlesheets)
 
+gs_ls()
 
 raw <- gs_url("https://docs.google.com/spreadsheets/d/1yg5lNLXUm7Upiz76a8QgyASyWJrUdRxcm9R_JwmyGA0/")
 
