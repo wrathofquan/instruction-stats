@@ -124,9 +124,11 @@ p8 <- ggplot(data= raw1, aes(x=time)) +
 
 ## grid
 
-a <- grid.arrange(p1, p2, p5, p6, p7, p8, nrow = 2)
+a <- grid.arrange(p1, p2, p5, p6,  nrow = 4)
 
-b<- p3
+b <- p3
 
 c <- p4
+
+d <- grid.arrange(p7, p8,  nrow = 1)
 
