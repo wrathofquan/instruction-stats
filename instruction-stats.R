@@ -79,10 +79,10 @@ p3.1 <- ggplot(data= subset(raw1, !is.na(course)), aes(x=type)) +
 raw1$faculty <- factor(raw1$faculty, levels=names(sort(table(raw1$faculty), increasing=TRUE)))
 
 p4 <- ggplot(data= subset(raw1, !is.na(faculty)), aes(x=faculty)) +
-  geom_bar(stat = "count") +
+  geom_bar(stat = "count", alpha = .5) +
   coord_flip()+
   theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + 
-  ggtitle("Faculty names")+ scale_x_discrete(name="")
+  ggtitle("Instructor names")+ scale_x_discrete(name="")
 
 ## patrons
 
@@ -124,6 +124,9 @@ p8 <- ggplot(data= raw1, aes(x=time)) +
 
 ## grid
 
-grid.arrange(p1, p2, p3, p4,p5, p6, p7, p8, nrow = 2)
+a <- grid.arrange(p1, p2, p5, p6, p7, p8, nrow = 2)
 
+b<- p3
+
+c <- p4
 
