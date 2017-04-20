@@ -3,6 +3,7 @@ library(googlesheets)
 library(ggthemes)
 library(gridExtra)
 
+#read in instruction stats sheet
 gs_ls()
 
 raw <- gs_url("https://docs.google.com/spreadsheets/d/1yg5lNLXUm7Upiz76a8QgyASyWJrUdRxcm9R_JwmyGA0/")
@@ -10,6 +11,7 @@ raw <- gs_url("https://docs.google.com/spreadsheets/d/1yg5lNLXUm7Upiz76a8QgyASyW
 raw <- raw %>%
   gs_read(ws = "Form Responses 1")
 
+#renames variables for easier typing
 
 raw <- rename(raw, timestamp = `Timestamp`,
               lastname = `Your Last Name`,
@@ -25,8 +27,10 @@ raw <- rename(raw, timestamp = `Timestamp`,
               notes = `Notes (can include learning goals, location of instructional materials, co-presenters etc.)`,
               copresenters = `Copresenters`)
 
-raw1 <- filter(raw, lastname == "Nawalaniec" )
+# to look at individuals
+raw1 <- filter(raw, lastname == "Quan" )
 
+#to look at entire group
 raw1 <- raw
 
 ## interactions over time
@@ -53,13 +57,32 @@ p2 <- ggplot(raw1, aes(type)) +
 
 ## courses
 #split the super long course title into an easier to read one
+# raw2 splits by white space to separate just department code
+raw2 <- raw1 %>% separate(course, into = c("dept","course2", "course3"),  sep = " ", extra = "drop")
 
-raw1 <- raw1 %>% separate(course, into = c("course","course2"),  sep = "\\-", extra = "merge")
+#create new data.frame with just department and count
+raw3 <- count(raw2, dept) %>% filter(!is.na(dept))
+raw3 <- arrange(raw3,desc(n))
 
-course_sum <- as.data.frame(table(raw1$course)) 
+#plot of most worked with departments
+p3 <- ggplot(data = raw3, aes(reorder(dept, n), n)) + geom_bar(stat = "identity") + coord_flip() +
+  theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + scale_x_discrete(name="department")
+
+#create new data.frame to look at department + course number
+
+raw4 <- raw1 %>% separate(course, into = c("course","course2"),  sep = "\\-", extra = "merge")
+
+course_sum <- as.data.frame(table(raw4$course)) 
+
+
+#splitting and combining some unique courses with different separators
+
+course_sum <- separate(course_sum, Var1, into = c("a","b", "c"), sep = " ", extra = "merge")
+
+course_sum <- unite(course_sum, course, a, b, sep = " ")
 
 course_sum <- course_sum %>% 
-  rename(course = Var1, count = Freq) %>% 
+  rename(count = Freq) %>%
   arrange(desc(count))  %>%
   top_n(20)
 
@@ -85,8 +108,6 @@ ggtitle("")+ scale_x_discrete(name="")
 
 
 ## faculty
-#this works to reorder by count of faculty
-#raw$faculty <- factor(raw$faculty, levels=names(sort(table(raw$faculty), increasing=TRUE)))
 
 faculty <- as.data.frame(table(raw1$faculty)) 
 
@@ -138,6 +159,13 @@ p8 <- ggplot(data= raw1, aes(x=time)) +
   coord_flip()+
   theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + 
   ggtitle("Time")+ scale_x_discrete(name="")
+
+##wordcluoud
+
+w<-count(raw, notes)
+wordcloud(words = w$notes, freq=w$n)
+
+1 <- count(raw1)
 
 ## grid
 
