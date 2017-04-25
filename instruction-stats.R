@@ -2,6 +2,7 @@ library(tidyverse)
 library(googlesheets)
 library(ggthemes)
 library(gridExtra)
+library(tidytext)
 
 #read in instruction stats sheet
 gs_ls()
@@ -27,6 +28,8 @@ raw <- rename(raw, timestamp = `Timestamp`,
               notes = `Notes (can include learning goals, location of instructional materials, co-presenters etc.)`,
               copresenters = `Copresenters`)
 
+raw$date <- as.Date(raw$date, "%m/%d/%Y")
+
 # to look at individuals
 raw1 <- filter(raw, lastname == "Quan" )
 
@@ -39,21 +42,22 @@ raw1 <- raw
 
 raw1$date <- as.Date(raw1$date, "%m/%d/%Y")
 
-p1 <- ggplot(raw1, aes(date)) +
+trend <- ggplot(raw1, aes(date)) +
   geom_histogram(binwidth = 10, stat = "bin", alpha = .2) +
   geom_density(stat = "bin", binwidth = 10)+
   theme_tufte(base_size = 11, base_family = "serif", ticks = TRUE) +
-  ggtitle("Entries over time") 
+  ggtitle("Interactions over time, Chao Chen") 
 
 
 ## type of research consultation
 raw1$type <- factor(raw1$type, levels=names(sort(table(raw1$type), increasing=TRUE)))
 
-p2 <- ggplot(raw1, aes(type)) +
+interaction <- ggplot(raw1, aes(type)) +
   geom_bar(stat = "count") +
   coord_flip()+
   theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + 
-  ggtitle("Interaction type")+ scale_x_discrete(name="")
+  ggtitle("Interaction type")+ scale_x_discrete(name="") 
+
 
 ## courses
 #split the super long course title into an easier to read one
@@ -65,8 +69,9 @@ raw3 <- count(raw2, dept) %>% filter(!is.na(dept))
 raw3 <- arrange(raw3,desc(n))
 
 #plot of most worked with departments
-p3 <- ggplot(data = raw3, aes(reorder(dept, n), n)) + geom_bar(stat = "identity") + coord_flip() +
-  theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + scale_x_discrete(name="department")
+departments <- ggplot(data = raw3, aes(reorder(dept, n), n)) + geom_bar(stat = "identity") + coord_flip() +
+  theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + scale_x_discrete(name="department") +
+  ggtitle("Departments by Count")
 
 #create new data.frame to look at department + course number
 
@@ -83,13 +88,12 @@ course_sum <- unite(course_sum, course, a, b, sep = " ")
 
 course_sum <- course_sum %>% 
   rename(count = Freq) %>%
-  arrange(desc(count))  %>%
-  top_n(20)
+  arrange(desc(count))  #%>%
+  #top_n(20)
 
 #reorder the factors, so that they appear as ascending in chart
-#course_sum <- factor(course_sum$course, levels=names(sort(table(course_sum$course), increasing=TRUE)))
 
-p3 <- ggplot(data=course_sum, aes(x=reorder(course, count), y = count)) +
+course <- ggplot(data=course_sum, aes(x=reorder(course, count), y = count)) +
   geom_bar(stat= "identity") +
   coord_flip()+
   theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + 
@@ -99,12 +103,12 @@ p3 <- ggplot(data=course_sum, aes(x=reorder(course, count), y = count)) +
 
 raw1$type <- factor(raw1$type, levels=names(sort(table(raw1$type), increasing=TRUE)))
 
-
-p3.1 <- ggplot(data= subset(raw1, !is.na(course)), aes(x=type)) +
+interaction1 <- ggplot(data= subset(raw1, !is.na(course)), aes(x=type)) +
   geom_bar(stat = "count") +
   coord_flip()+
   theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE)
-ggtitle("")+ scale_x_discrete(name="")
+  ggtitle("")+ scale_x_discrete(name = "") 
+  
 
 
 ## faculty
@@ -114,66 +118,75 @@ faculty <- as.data.frame(table(raw1$faculty))
 faculty <- faculty %>% 
   rename(faculty = Var1, count = Freq) %>% 
   arrange(desc(count))  %>%
-  top_n(20)
+  top_n(40)
 
-p4 <- ggplot(data= faculty, aes(x= reorder(faculty,count), y= count)) +
+faculty <- ggplot(data= faculty, aes(x= reorder(faculty,count), y= count)) +
   geom_bar(stat= "identity") +
   coord_flip()+
   theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + 
-  ggtitle("Instructor names")+ scale_x_discrete(name="")
+  ggtitle("Instructor by Count")+ scale_x_discrete(name="")
 
 ## patrons
 
 raw1$patron <- factor(raw1$patron, levels=names(sort(table(raw1$patron), increasing=TRUE)))
 
-p5 <- ggplot(data= raw1, aes(x= patron)) +
+patron <- ggplot(data= raw1, aes(x= patron)) +
   geom_bar(stat = "count") +
   coord_flip()+
   theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + 
-  ggtitle("Patron type")+ scale_x_discrete(name="")
+  ggtitle("Patron type")+ scale_x_discrete(name="") 
+
 
 ## location
 raw1$location <- factor(raw1$location, levels=names(sort(table(raw1$location), increasing=TRUE)))
 
-p6 <- ggplot(data= raw1, aes(x=location)) +
+location <- ggplot(data= raw1, aes(x=location)) +
   geom_bar(stat = "count") +
   coord_flip()+
   theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + 
-  ggtitle("Location")+ scale_x_discrete(name="")
+  ggtitle("Location")+ scale_x_discrete(name="") 
+
 
 ## delivery mode
-raw1$delivery <- factor(raw1$delivery, levels=names(sort(table(raw1$delivery), increasing=TRUE)))
 
-p7 <- ggplot(data= raw1, aes(x=delivery)) +
+delivery <- ggplot(data= raw1, aes(x=delivery)) +
   geom_bar(stat = "count") +
   coord_flip()+
   theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + 
-  ggtitle("Delivery mode")+ scale_x_discrete(name="")
+  ggtitle("Delivery mode")+ scale_x_discrete(name="") 
+
 
 ## time
 
 raw1$time <- factor(raw1$time, levels=names(sort(table(raw1$time), increasing=TRUE)))
 
-p8 <- ggplot(data= raw1, aes(x=time)) +
+time <- ggplot(data= raw1, aes(x=time)) +
   geom_bar(stat = "count") +
   coord_flip()+
   theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + 
-  ggtitle("Time")+ scale_x_discrete(name="")
+  ggtitle("Time")+ scale_x_discrete(name="") 
 
-##wordcluoud
+
+##wordcluoud.. not super useful..
 
 w<-count(raw, notes)
+w <- w %>%
+  na.omit() %>%
+  unnest_tokens(notes1, notes) %>%
+  count(notes1, sort = TRUE) %>%
+  anti_join(stop_words) %>%
+  ungroup()
+
+w <- count(w, notes)
 wordcloud(words = w$notes, freq=w$n)
 
-1 <- count(raw1)
 
-## grid
+## output onto grid. needs some work...
 
-a <- grid.arrange(p1, p2, p5, p6,  nrow = 4)
+a <- grid.arrange(trend, time, interaction, patron, location, delivery,  nrow = 2)
 
-b <- p3
+b <- grid.arrange(departments, course, nrow = 1)
 
-c <- p4
+c <- faculty
 
-d <- grid.arrange(p7, p8,  nrow = 1)
 
