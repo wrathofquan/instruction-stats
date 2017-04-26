@@ -28,7 +28,22 @@ raw <- rename(raw, timestamp = `Timestamp`,
               notes = `Notes (can include learning goals, location of instructional materials, co-presenters etc.)`,
               copresenters = `Copresenters`)
 
+#convert date from character
 raw$date <- as.Date(raw$date, "%m/%d/%Y")
+
+#split date into month, year variables
+raw <- raw %>% separate(date, into = c("year","month", "day"),  sep = "\\-", remove = FALSE) 
+  
+raw$month <- as.numeric(raw$month)
+
+
+raw <- mutate(raw, semester = ifelse(month %in% 01:05, "Spring",
+                                     ifelse(month %in% 06:08, "Summer",
+                                            ifelse(month %in% 09:12, "Fall", "NA")))) 
+
+raw$semester <- as.factor(raw$semester)
+
+
 
 # to look at individuals
 raw1 <- filter(raw, lastname == "Quan" )
@@ -38,15 +53,11 @@ raw1 <- raw
 
 ## interactions over time
 
-#convert date variable from character class to date
-
-raw1$date <- as.Date(raw1$date, "%m/%d/%Y")
-
 trend <- ggplot(raw1, aes(date)) +
   geom_histogram(binwidth = 10, stat = "bin", alpha = .2) +
   geom_density(stat = "bin", binwidth = 10)+
   theme_tufte(base_size = 11, base_family = "serif", ticks = TRUE) +
-  ggtitle("Interactions over time, Chao Chen") 
+  ggtitle("Interactions over time") 
 
 
 ## type of research consultation
@@ -65,13 +76,13 @@ interaction <- ggplot(raw1, aes(type)) +
 raw2 <- raw1 %>% separate(course, into = c("dept","course2", "course3"),  sep = " ", extra = "drop")
 
 #create new data.frame with just department and count
-raw3 <- count(raw2, dept) %>% filter(!is.na(dept))
+raw3 <- count(raw2, dept, semester) %>% filter(!is.na(dept))
 raw3 <- arrange(raw3,desc(n))
 
 #plot of most worked with departments
-departments <- ggplot(data = raw3, aes(reorder(dept, n), n)) + geom_bar(stat = "identity") + coord_flip() +
+departments <- ggplot(data = raw3, aes(reorder(dept, n), n, fill = semester)) + geom_bar(stat = "identity") + coord_flip() +
   theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + scale_x_discrete(name="department") +
-  ggtitle("Departments by Count")
+  ggtitle("Departments by Count x Semester")
 
 #create new data.frame to look at department + course number
 
