@@ -81,7 +81,8 @@ raw3 <- arrange(raw3,desc(n))
 
 #plot of most worked with departments
 departments <- ggplot(data = raw3, aes(reorder(dept, n), n, fill = semester)) + geom_bar(stat = "identity") + coord_flip() +
-  theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) + scale_x_discrete(name="department") +
+  theme_tufte(base_size = 11, base_family = "serif", ticks = FALSE) +   scale_fill_ptol() +
+ scale_x_discrete(name="department") +
   ggtitle("Departments by Count x Semester")
 
 #create new data.frame to look at department + course number
